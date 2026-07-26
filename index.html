@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2048,6 +2048,7 @@ body {
       <div id="repLogoutArea" style="display:none;margin-top:8px">
         <button class="config-btn config-btn-danger" style="width:100%" onclick="logoutRepresentante()">&#128683; Voltar para Alunos (bloquear edicoes)</button>
         <p style="font-size:0.65rem;color:var(--text-muted);margin-top:6px;text-align:center">Enquanto autenticado, qualquer pessoa pode modificar a agenda.</p>
+        <button class="config-btn config-btn-secondary" style="width:100%;margin-top:6px;font-size:0.7rem" onclick="resetToken()">&#128274; Trocar token da nuvem</button>
       </div>
     </div>
     <div class="config-card" id="configIESC" style="display:none">
@@ -5007,7 +5008,14 @@ async function saveToCloud(silent) {
     
     if (!silent) alert('Salvo na nuvem! Todos os dispositivos carregarao automaticamente.');
   } catch(e) {
-    alert('Erro ao salvar na nuvem:\n' + e.message + '\n\nVerifique:\n1. Token correto\n2. Internet\n3. Token tem permissao "gist"');
+    // Se falhou ao atualizar, limpa ID antigo e tenta criar novo na proxima
+    if (gistId && (e.message.includes('Not Found') || e.message.includes('cannot be updated'))) {
+      localStorage.removeItem('m6_gist_id');
+      localStorage.removeItem('m6_gist_raw_url');
+      alert('Gist antigo invalido. Tente salvar novamente (um novo sera criado).');
+      return;
+    }
+    alert('Erro ao salvar na nuvem:\n' + e.message + '\n\nVerifique:\n1. Token correto\n2. Internet\n3. Token tem permissao "gist"\n\nPara trocar o token, va em Config > Seguranca > Token.');
   }
 }
 
@@ -5161,6 +5169,15 @@ function addNotice() {
 function toggleNoticePanel() {
   const panel = document.getElementById('noticePanel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function resetToken() {
+  if (confirm('Limpar o token da nuvem? Voce precisara digitar um novo token ao salvar.')) {
+    localStorage.removeItem('m6_gist_token');
+    localStorage.removeItem('m6_gist_id');
+    localStorage.removeItem('m6_gist_raw_url');
+    alert('Token removido. Ao clicar em Nuvem, voce podera colocar um novo.');
+  }
 }
 
 function clearNotices() {
